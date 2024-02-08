@@ -1,6 +1,7 @@
 This is a test!
-This code goes into the Teleop Periodic
-drive.tankDrive(newJoystick.getRawAxis(2), newJoystick.getRawAxis(5));
+This code goes into the class robot extends ...
+public void pointAndShoot() {
+    drive.tankDrive(newJoystick.getRawAxis(2), newJoystick.getRawAxis(5));
     double valX = newJoystick.getRawAxis(0);
     double valY = newJoystick.getRawAxis(1);
     double toTan = valX/valY;
@@ -8,4 +9,7 @@ drive.tankDrive(newJoystick.getRawAxis(2), newJoystick.getRawAxis(5));
     double JoystickAngle = Math.toDegrees(tannedDegrees);
     double CurrentAngle = gyro.getAngle();
     drive.tankDrive(CurrentAngle + JoystickAngle, CurrentAngle - JoystickAngle);
+  }
+This code goes teleop periodic:
+CameraServer.startAutomaticCapture();
 Hello.
