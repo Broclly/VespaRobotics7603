@@ -22,7 +22,6 @@ import java.util.function.Function;
 
 public class Robot extends TimedRobot {
    public void pointAndShoot() {
-    drive.tankDrive(newJoystick.getRawAxis(2), newJoystick.getRawAxis(5));
     double valX = newJoystick.getRawAxis(0);
     double valY = newJoystick.getRawAxis(1);
     double toTan = valX/valY;
