@@ -25,6 +25,7 @@ public class Robot extends TimedRobot {
     double valX = newJoystick.getRawAxis(0);
     double valY = newJoystick.getRawAxis(1);
     double toTan = valX/valY;
+    System.out.println(toTan);
     double tannedDegrees = Math.tan(toTan);
     double JoystickAngle = Math.toDegrees(tannedDegrees);
     double CurrentAngle = gyro.getAngle();
