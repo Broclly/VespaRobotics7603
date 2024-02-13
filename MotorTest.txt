@@ -5,11 +5,9 @@
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.motorcontrol.Victor;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -18,9 +16,10 @@ import edu.wpi.first.wpilibj.motorcontrol.Victor;
  * project.
  */
 public class Robot extends TimedRobot {
-  VictorSPX fortnite1 = new VictorSPX(7);
-  VictorSPX fortnite2 = new VictorSPX(5);
-  VictorSPX fortnite3 = new VictorSPX(6);
+  VictorSPX motorL2 = new VictorSPX(7);
+  VictorSPX motorR1 = new VictorSPX(5);
+  VictorSPX motorR2 = new VictorSPX(6);
+  VictorSPX motorL1 = new VictorSPX(10);
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -35,15 +34,20 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {}
 
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+
+    motorL1.set(ControlMode.PercentOutput, 0.5);
+    motorL2.set(ControlMode.PercentOutput, 0.5); // last digit is speed value
+
+    motorR1.set(ControlMode.PercentOutput, 0.5);
+    motorR2.set(ControlMode.PercentOutput,0.5);
+  }
 
   @Override
   public void teleopInit() {}
 
   @Override
   public void teleopPeriodic() {
-    fortnite3.set(ControlMode.PercentOutput, 1);
-    fortnite2.set(ControlMode.PercentOutput, 0.25); // last digit is speed value
   }   
 
 
