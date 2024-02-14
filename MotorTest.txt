@@ -36,11 +36,19 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
 
-    motorL1.set(ControlMode.PercentOutput, 0.5);
-    motorL2.set(ControlMode.PercentOutput, 0.5); // last digit is speed value
+    motorL1.set(ControlMode.PercentOutput, .2);
+    motorL2.set(ControlMode.PercentOutput, .2);
 
-    motorR1.set(ControlMode.PercentOutput, 0.5);
-    motorR2.set(ControlMode.PercentOutput,0.5);
+    motorR1.set(ControlMode.PercentOutput, -.2);
+    motorR2.set(ControlMode.PercentOutput,-.2);
+
+    /* Last digita of motor.set method is the speed.
+    spins if both values are positive, goes straight
+    if L values are positive, and R values are negative.
+
+    Anywhere past .5 is the danger zone (very fast)
+    
+    */ 
   }
 
   @Override
