@@ -5,6 +5,9 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.apriltag.AprilTagDetector;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -54,8 +57,9 @@ public class Robot extends TimedRobot {
 
   void apriltagVisionThreadProc() {
     var detector = new AprilTagDetector();
+    System.out.println("Function running");
     // look for tag16h5, don't correct any error bits
-    detector.addFamily("tag16h5", 0);
+    detector.addFamily("tag36h11", 0);
 
     // Positions of AprilTags
     AprilTagFieldLayout aprilTagFieldLayout;
@@ -209,6 +213,7 @@ public class Robot extends TimedRobot {
                 new double[] {
                   robotInFieldFrame.getX(), robotInFieldFrame.getY(), robotInFieldFrame.getZ(), rot.getX(), rot.getY(), rot.getZ()
                 });
+        System.out.println(pose);
       }
 
       // put list of tags onto dashboard
