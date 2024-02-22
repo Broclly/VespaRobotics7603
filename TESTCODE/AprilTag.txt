@@ -52,7 +52,9 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   double[] position;
-  
+  double x;
+  double y;
+  double z;
   @Override
   public void robotInit() {
     var visionThread = new Thread(() -> apriltagVisionThreadProc());
@@ -218,9 +220,9 @@ public class Robot extends TimedRobot {
                 new double[] {
                   robotInFieldFrame.getX(), robotInFieldFrame.getY(), robotInFieldFrame.getZ(), rot.getX(), rot.getY(), rot.getZ()
                 });
-        Double x = robotInFieldFrame.getX();
-        Double y = robotInFieldFrame.getY();
-        Double z = robotInFieldFrame.getZ();
+        x = robotInFieldFrame.getX();
+        y = robotInFieldFrame.getY();
+        z = robotInFieldFrame.getZ();
 
         System.out.println(x);
         System.out.println(y);
@@ -266,7 +268,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    System.out.println(position);
+    System.out.println(x);
   }
 
   @Override
