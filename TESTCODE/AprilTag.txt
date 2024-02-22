@@ -31,6 +31,7 @@ import edu.wpi.first.vision.VisionThread;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -74,7 +75,7 @@ public class Robot extends TimedRobot {
     // (https://www.chiefdelphi.com/t/wpilib-apriltagdetector-sample-code/421411/21)
     var poseEstConfig =
         new AprilTagPoseEstimator.Config(
-            0.1524, 699.3778103158814, 677.7161226393544, 345.6059345433618, 207.12741326228522);
+          0.1651, 699.3778103158814, 677.7161226393544, 345.6059345433618, 207.12741326228522);
     var estimator = new AprilTagPoseEstimator(poseEstConfig);
 
     // Get the UsbCamera from CameraServer
@@ -213,7 +214,27 @@ public class Robot extends TimedRobot {
                 new double[] {
                   robotInFieldFrame.getX(), robotInFieldFrame.getY(), robotInFieldFrame.getZ(), rot.getX(), rot.getY(), rot.getZ()
                 });
-        System.out.println(pose);
+        Double x = robotInFieldFrame.getX();
+        Double y = robotInFieldFrame.getY();
+        Double z = robotInFieldFrame.getZ();
+
+        System.out.println(x);
+        System.out.println(y);
+        System.out.println(z);
+
+        int aprilTagId = detection.getId();
+
+        if (aprilTagId == 1 || aprilTagId ==  2 || aprilTagId ==  3 || aprilTagId == 4) {
+
+          x = -(x - 15);
+
+        }
+
+        // Pushes the data fetched from an AprilTag to Shuffleboard
+
+        SmartDashboard.putNumber("Distance", x );
+        SmartDashboard.putNumber("Left or Right", y);
+        SmartDashboard.putNumber("Camera Angle", z);
       }
 
       // put list of tags onto dashboard
