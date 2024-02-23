@@ -26,7 +26,10 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.motorcontrol.Victor;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.vision.VisionThread;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -48,14 +51,15 @@ import org.opencv.imgproc.Imgproc;
 
  
 public class Robot extends TimedRobot {
-  Victor motorL2 = new Victor(7);
-  Victor motorR1 = new Victor(5);
-  Victor motorR2 = new Victor(6);
-  Victor motorL1 = new Victor(10);
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
+  VictorSPX motorL2 = new VictorSPX(7);
+  VictorSPX motorR1 = new VictorSPX(5);
+  VictorSPX motorR2 = new VictorSPX(6);
+  VictorSPX motorL1 = new VictorSPX(10);
   double[] position = {0,0,0};
   @Override
   public void robotInit() {
@@ -272,10 +276,11 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
     System.out.println(position[0]);
     if (position[0] > 1.5){
-      motorL1.set(1);
-      motorR1.set(-1);
-      motorL2.set(1);
-      motorR2.set(-1);
+      motorL1.set(ControlMode.PercentOutput, .2);
+      motorL2.set(ControlMode.PercentOutput, .2);
+  
+      motorR1.set(ControlMode.PercentOutput, -.2);
+      motorR2.set(ControlMode.PercentOutput,-.2);
     }
   }
 
