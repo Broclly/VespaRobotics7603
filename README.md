@@ -1,4 +1,4 @@
-Priorities:
+# Priorities:
 
 - [ ] Perfect point and shoot
 - [ ] Finish Apriltag Actions
