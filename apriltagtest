@@ -60,6 +60,9 @@ public class Robot extends TimedRobot {
   VictorSPX motorR1 = new VictorSPX(5);
   VictorSPX motorR2 = new VictorSPX(6);
   VictorSPX motorL1 = new VictorSPX(10);
+  double offset = 0;
+  double moveSpeed = 0.3;
+
   double[] position = {0,0,0};
   @Override
   public void robotInit() {
@@ -241,15 +244,15 @@ public class Robot extends TimedRobot {
 
         if (aprilTagId == 1 || aprilTagId ==  2 || aprilTagId ==  3 || aprilTagId == 4) {
 
-          x = -(x - 15);
-
+          this.position[0] = -(this.position[0] - 15);
         }
 
         // Pushes the data fetched from an AprilTag to Shuffleboard
 
-        SmartDashboard.putNumber("Distance", x );
+        SmartDashboard.putNumber("Distance", this.position[0]);
         SmartDashboard.putNumber("Left or Right", y);
         SmartDashboard.putNumber("Camera Angle", z);
+
       }
 
       // put list of tags onto dashboard
@@ -264,7 +267,9 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    offset = 0.04 - (moveSpeed/25);
+  }
 
   @Override
   public void autonomousInit() {}
@@ -274,13 +279,20 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    System.out.println(position[0]);
+    System.out.println("Distance from wall:" + String.valueOf(position[0]));
     if (position[0] > 1.5){
-      motorL1.set(ControlMode.PercentOutput, .2);
-      motorL2.set(ControlMode.PercentOutput, .2);
+      motorL1.set(ControlMode.PercentOutput, moveSpeed);
+      motorL2.set(ControlMode.PercentOutput, moveSpeed);
   
-      motorR1.set(ControlMode.PercentOutput, -.2);
-      motorR2.set(ControlMode.PercentOutput,-.2);
+      motorR1.set(ControlMode.PercentOutput, -moveSpeed);
+      motorR2.set(ControlMode.PercentOutput,-moveSpeed);
+    }
+    else{
+      motorL1.set(ControlMode.PercentOutput, 0);
+      motorL2.set(ControlMode.PercentOutput, 0);
+
+      motorR1.set(ControlMode.PercentOutput, 0);
+      motorR2.set(ControlMode.PercentOutput, 0);
     }
   }
 
