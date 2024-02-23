@@ -1,6 +1,6 @@
 Priorities:
 
-1. Perfect point and shoot
-2. Finish Apriltag Actions
-3. WINCH!!!!!!!!!!
-4. Create "quick action" buttons
+[] Perfect point and shoot
+[] Finish Apriltag Actions
+[] WINCH!!!!!!!!!!
+[] Create "quick action" buttons
