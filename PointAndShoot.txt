@@ -1,0 +1,194 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
+package frc.robot;
+
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.cameraserver.*;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.cameraserver.*;
+
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
+
+
+/**
+ * The VM is configured to automatically run this class, and to call the functions corresponding to
+ * each mode, as described in the TimedRobot documentation. If you change the name of this class or
+ * the package after creating this project, you must also update the build.gradle file in the
+ * project.
+ */
+public class Robot extends TimedRobot {
+  /**
+   * This function is run when the robot is first started up and should be used for any
+   * initialization code.
+   */
+  VictorSPX motorL2 = new VictorSPX(7);
+  VictorSPX motorR1 = new VictorSPX(5);
+  VictorSPX motorR2 = new VictorSPX(6);
+  VictorSPX motorL1 = new VictorSPX(10);
+
+  ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+  Joystick flightStick = new Joystick(0);
+  //driveTrain drive = new driveTrain(motorL1, motorL2, motorR1, motorR2);
+
+  public void tank(double LMS, double RMS){
+    // change format for motor controler
+    double offset = 0.04 - (LMS/25);
+    //System.out.println("tanking");
+    motorL1.set(ControlMode.PercentOutput, LMS - offset);
+    motorL2.set(ControlMode.PercentOutput, LMS - offset);
+
+    motorR1.set(ControlMode.PercentOutput, -RMS);
+    motorR2.set(ControlMode.PercentOutput, -RMS);
+  }
+  public void arcade(double Speed, double turnAng){
+    // speed - sin turn ?
+    // turn rad
+    // neg turn ang left, pos right, 0 no turn
+    /*
+        * need width of robot(dist from centre to wheels)?
+        * 
+        * inner circ/outer
+        */
+    //turnAng *= -1; // just in case
+    System.out.println("This is arc turn ang");
+    System.out.println(turnAng);
+    double Ls = 1;
+    double Rs = 1;
+    if (turnAng < 0){
+        //turn left
+        // left speed - sin(turn*pi/2)
+        //Ls -= Math.sin(turnAng*Math.PI/2);
+        Ls = Math.cos(turnAng*Math.PI);
+    }
+    else if(turnAng > 0){
+        // turn Right
+        // rihgt speed - sin(-turn*pi/2)
+        //Rs -= Math.sin(-turnAng*Math.PI/2);
+        Rs = Math.cos(turnAng*Math.PI);
+    }
+    else{
+        // dont turn
+    }
+    tank(Ls*Speed, Rs*Speed);
+  }
+  public void pointNShoot(double desiredAng, double currentAng, double speed){
+    // curAng - desAng?
+    double pnsAng = (((currentAng - desiredAng)/180));
+    arcade(speed, (((currentAng - desiredAng)/180)) );
+    SmartDashboard.putNumber("PNS Angle", pnsAng);
+    // will this work?
+  }
+
+  public static double[] getPolarSqr(double xPos, double yPos){
+    /*
+     * This will convert the coords from a square radius 1, to polar coords radius 1
+     * Basicaly gives us the angle and dist from origin when given the coords from joystick (circle-ing the square)
+     */
+    double ang = Math.atan2(yPos,xPos);
+    if (ang < 0){
+        ang += 2*Math.PI;
+    }
+    //System.out.println("angle");
+    //System.out.println(ang);
+    double hyp = Math.hypot(xPos, yPos);
+    /*
+     * to get relative radius reference expected rad for square
+     * divide circle rad by sqr rad 
+     * (I have a graph on desmos that makes regular polygons from angle, I'm using that)
+     * sqr rad = 1/ cos (mod theta + pi/side of 2pi / side ~~a.k.a (theta + pi/side )% 2pi/side~~ - pi/side) ~~side is the number of sides, 4 in this case~~
+     * circ rad = sqrt( x^2 + y^2 ) aka the hyp var
+     * circ rad/sqr rad ( since sqr rad is 1 over cos, I can just multiply by cos)
+     */
+    double side = 4;// this var will never need to change
+    //double modulusThing = (ang+Math.PI/side) - (2*Math.PI/side)*Math.floor( (ang+Math.PI/side) / (2*Math.PI/side) ); // mod function is x - yFloor(x/y), where x is first num and y is second ( this is the same as x mod y or x % y or mod x of y or mod(x,y) )
+    double squareRad = Math.cos( ( (ang+Math.PI/side) % (2*Math.PI/side) - Math.PI/side) );
+    /*
+    System.out.println("Mod?");
+    System.out.println( (ang+Math.PI/side) % (2*Math.PI/side));
+    System.out.println("This should be squre rad");
+    System.out.println(1/squareRad);
+    */
+    ang = Math.toDegrees(ang + Math.PI/2);
+    ang %= 360;
+    double[] polarCoords = {hyp*squareRad, ang};
+    //System.out.println(polarCoords[0]);
+    return polarCoords;
+}
+
+  @Override
+  public void robotInit() {
+    CameraServer.startAutomaticCapture();
+  }
+
+  @Override
+  public void robotPeriodic() {
+  }
+
+  @Override
+  public void autonomousInit() {}
+
+  @Override
+  public void autonomousPeriodic() {
+    /*
+    motorL1.set(ControlMode.PercentOutput, .2);
+    motorL2.set(ControlMode.PercentOutput, .2);
+
+    motorR1.set(ControlMode.PercentOutput, -.2);
+    motorR2.set(ControlMode.PercentOutput,-.2);
+     */
+    double LSSpeed = 0.3;
+    double RSSpeed = 0.2;
+    tank(LSSpeed, RSSpeed);
+    //arcade(LSSpeed, -0.5);// trun angle in arcade dirve should vary from -1 to 1, automatically converts to angle
+    //pointNShoot(90, 0, LSSpeed); // give angle in degrees (can be made for rad)
+  }
+
+  @Override
+  public void teleopInit() {}
+
+  @Override
+  public void teleopPeriodic() {
+    // Point and shoot steering implementation
+    // get joystick vals
+    double joyX = flightStick.getRawAxis(0);
+    double joyY = flightStick.getRawAxis(1);
+    double gyroData = gyro.getAngle();
+    double gyroAngle = gyroData;
+    gyroAngle %= 360;
+    System.out.println(gyroAngle);
+    double[] polarJoy = getPolarSqr(-joyX, -joyY);
+    //pointNShoot(polarJoy[1], gyroAngle, polarJoy[0]);
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SmartDashboard.putNumber("gyro angle", gyroAngle);
+    SmartDashboard.putNumber("RawGyro", gyroData);
+    SmartDashboard.putNumber("Joystick Angle", polarJoy[1]);
+    
+  }
+
+  @Override
+  public void disabledInit() {}
+
+  @Override
+  public void disabledPeriodic() {}
+
+  @Override
+  public void testInit() {}
+
+  @Override
+  public void testPeriodic() {}
+
+  @Override
+  public void simulationInit() {}
+
+  @Override
+  public void simulationPeriodic() {}
+}
