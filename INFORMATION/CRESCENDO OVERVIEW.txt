@@ -1,0 +1,55 @@
+CRESECENDO Overview Notes (2024)
+
+Rules have special codes that can be decoded by following the simple patterns:
+
+Rules published in Section 6.7.1 (Question Box) start with "Q"
+Rules published in Section 7 (Game Rules) start with "G"
+Rules published in Section 8 (ROBOT Construction Rules) start with "R"
+Rules published in Section 9 (Inspection & Eligibility) start with "I"
+Rules published in Section 10 (Tournaments) start with "T"
+Rules published in Section 12 (FIRST Championship Tournament) start with "C"
+Rules published in Section 13 (Event Rules) start with "E"
+
+
+-------------
+
+As well, the rule codes are made up of 1 character and multiple digits. For example:
+
+R710
+
+The R stands for "Section 8 (ROBOT Construction Rules)"
+The 7 stands for "Subsection 7 (Control Command & Signals Systems)"
+The 10 stands for "Rule number 10 in subsection"
+
+-------------
+
+As well, in the manuals blue boxes may appear. These signify warnings, caution and notes. 
+The may have examples or information that makes interrupting a role easier. This
+does also mean that ACTUAL rules carry more weight than information included in
+a bluebox.
+
+-------------
+
+The Q&A system is will not answer questions such as ones regarding:
+
+>Rulings on vague situations
+>Challenging decisions made at past events
+>Design reviews of a ROBOT system for legality
+>Duplicate questions
+>Nonsens questions
+
+Some examples of these could be:
+
+>"Is this part/design legal?"
+>"How should the REFEREE have ruled when this specific game play happened"
+
+Good questions that will be answered are:
+
+>"A device we are considering using on the ROBOT comes with purple AWG 40 wire, does this comply with rule Rxx and Rxx?"
+>"We're not sure how to interpret how Rule Gxx applies if blue ROBOT A does X and red ROBOT B does Y, can you please clarify?"
+>"If a ROBOT does this specific action, is it doing what this defined term is describing?"
+
+To add on, question from "FRC 99999" are questions asked by key volunteers (REFEREES, INSPECTORS, etc), which are answered
+by FIRST (and FIRST only) and are considered relevant to teams.
+
+-------------

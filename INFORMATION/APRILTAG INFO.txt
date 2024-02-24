@@ -1,0 +1,13 @@
+Apriltag Research:
+
+-------------
+
+Apriltags are small, QR code-like images that can be scanned. They can be in the shapes of circles, squares
+or various custom shapes. 
+
+Most AprilTags have IDs attached to them, and the tag family that is being used this year has a total of 587 possible ID codes. An
+AprilTag in the current family this year (36h11) contains a square with 10x10 pixels, with a outer borders of all white pixels, and an inner
+border of all black pixels.
+
+AprilTags, when scanned using the new SDK, can provide position and rotation orientation. However, gaining such 
+information can only be obtained when scanning a flat AprilTag.   

@@ -1,0 +1,14 @@
+Gyroscope Documentation:
+
+-------------
+
+The ADXRS450 Gyroscope Board (gyroscope currently on robot) can be plugged directly into the RoboRIO board
+and displays voltage information based on rotation values. 
+
+Rotation values are displayed in degrees/sec rather than exact values of rotation. This means equations must be run in order
+to get specific values rather than reading a specific value. 
+
+-------------
+
+Running the code: "SmartDashboard.putNumber("Gyro", gyro.getRotation2d().getDegrees());" while having Shuffleboard active, with the ADXRS450
+gyroscope attached onto the SPI port of the roboRIO, you can use right click on the gyro info in the sources tab.

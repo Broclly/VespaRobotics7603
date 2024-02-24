@@ -1,0 +1,44 @@
+Shuffleboard Documentation:
+
+-------------
+
+TOUR OF SHUFFLEBOARD:
+
+Shuffleboard is a certain type of dashboard available in the FRC Driver Station, dashboard 
+config. Shuffleboard uses custom widgets that are laid out on a grid. You can change the way the grid looks 
+in size, layouts, and how the widgets are displayed. Widgets can be dragged and dropped into wherever you 
+see fit in the grid. You can also turn off the grid itself in order for it to work! Shuffleboard also contains graph widget
+which can track numeric data. You can also write your own custom widgets. (more on that later)
+
+
+On the top right, you can see the sources, where you can view raw data output. Next to the sources tab
+is also the widgets tab, which have some widgets that display information for you.
+
+In the middle you can see the tabs area which displays the current widgets that are being used. Above that, 
+you can see the different tabs that are selectable. These tabs can hold different widgets such as gyroscope info,
+camera stream, accelorometer data, and much more!
+
+On the bottom, you have recording tools, which are useful for playing back information that is gathered during a certain session.
+
+-------------
+
+DISPLAYING ROBOT INFO:
+
+Shuffleboard allows the use of displaying information that is outputted from the robot, such as gyroscope data, 
+swerve angles, speed data, and bridge angles. Displaying this info is incredibly easy to see and view by using shuffleboard,
+as it uses GUI that updates actively, and shows information in a way that makes sense.
+
+This information can be grabbed in normal operating modes (such as auto or teleop) by invoking various different SmartDashboard 
+methods. For example, using the method, "SmartDashboard.putNumber("Left Drive Encoder", drivetrain.getLeftEncoder());", you get a helpful
+GUI widget that shows that data.
+
+Displaying information can be as easy as 123 if you remember what method you need to call for specific types, for example
+numeric types such as "char", "int", "long", "float", or "double" require you to call the "SmartDashboard.putNumber(dashboard-name,value);"
+method in order for it to work, string uses the same but "putString" instead of "putNumber" and boolean types require
+"putBoolean" instead. 
+
+As well you can use Shuffleboard to change how the type of data is displayed by right clicking on any GUI display,
+and clicking "Show as" to display various different options. Play around with these options in order to find out which works best
+for what.
+
+

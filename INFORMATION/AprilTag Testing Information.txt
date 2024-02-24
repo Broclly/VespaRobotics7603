@@ -1,0 +1,21 @@
+X is distance from tag
+Y is left to right
+Z is height
+
+
+ID 1: 14
+ID 2: 14
+ID 3: 14
+ID 4: 14 (15)?
+ID 5: 2
+ID 6: 2
+ID 7: 2
+ID 8: 2
+ID 9: fail
+ID 10: fail
+Above ID 10 is fail
+
+Fixes attempted:
+
+-Changed error margin
+-Changed tag size to accurate tag size
