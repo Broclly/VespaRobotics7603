@@ -4,9 +4,12 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 class driveTrain{
     // initialzing vars
@@ -32,11 +35,11 @@ class driveTrain{
     }
     void tankDrive(double LMS, double RMS){
         // change format for motor controler
-        LeftMotor1.set(ControlMode.PercentOutput, LMS);
-        LeftMotor2.set(ControlMode.PercentOutput, LMS);
+        LeftMotor1.set(ControlMode.PercentOutput, LMS - 0.04 - (LMS/25));
+        LeftMotor2.set(ControlMode.PercentOutput, LMS - 0.04 - (LMS/25));
 
-        RightMotor1.set(ControlMode.PercentOutput, RMS);
-        RightMotor2.set(ControlMode.PercentOutput, RMS);
+        RightMotor1.set(ControlMode.PercentOutput, -RMS);
+        RightMotor2.set(ControlMode.PercentOutput, -RMS);
     }
     void arcadeDrive(double Speed, double turnAng){
         // speed - sin turn ?
@@ -91,12 +94,19 @@ public class Robot extends TimedRobot {
   VictorSPX motorR2 = new VictorSPX(6);
   VictorSPX motorL1 = new VictorSPX(10);
 
+  Joystick flightStick = new Joystick(0);
+
   driveTrain drive = new driveTrain(motorL1, motorL2, motorR1, motorR2);
   @Override
   public void robotInit() {}
 
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    double LSSpeed = flightStick.getRawAxis(0) * -1;
+    double RSSpeed = flightStick.getRawAxis(1) * -1;
+    SmartDashboard.putNumber("LeftSpeed", LSSpeed);
+    SmartDashboard.putNumber("RightSpeed", RSSpeed);
+  }
 
   @Override
   public void autonomousInit() {}
@@ -110,9 +120,6 @@ public class Robot extends TimedRobot {
     motorR1.set(ControlMode.PercentOutput, -.2);
     motorR2.set(ControlMode.PercentOutput,-.2);
      */
-    double LSSpeed = 0.2;
-    double RSSpeed = 0.2;
-    drive.tankDrive(LSSpeed, RSSpeed);
     //drive.arcadeDrive(LSSpeed, 0);// trun angle in arcade dirve should vary from -1 to 1, automatically converts to angle
     //drive.pointShoot(90, 0, LSSpeed); // give angle in degrees (can be made for rad)
   }
@@ -121,7 +128,14 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    double LSSpeed = flightStick.getRawAxis(0) * -1;
+    double RSSpeed = flightStick.getRawAxis(1) * -1;
+    SmartDashboard.putNumber("LeftSpeed", LSSpeed);
+    SmartDashboard.putNumber("RightSpeed", RSSpeed);
+    System.out.println(LSSpeed);
+    drive.tankDrive(LSSpeed, RSSpeed);
+  }
 
   @Override
   public void disabledInit() {}
