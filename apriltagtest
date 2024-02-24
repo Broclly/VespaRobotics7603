@@ -280,7 +280,11 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     System.out.println("Distance from wall:" + String.valueOf(position[0]));
-    if (position[0] > 1.5){
+  }
+
+  @Override
+  public void teleopPeriodic() {
+    if (position[0] > 3){
       motorL1.set(ControlMode.PercentOutput, moveSpeed);
       motorL2.set(ControlMode.PercentOutput, moveSpeed);
   
@@ -295,9 +299,6 @@ public class Robot extends TimedRobot {
       motorR2.set(ControlMode.PercentOutput, 0);
     }
   }
-
-  @Override
-  public void teleopPeriodic() {}
 
   @Override
   public void disabledInit() {}
