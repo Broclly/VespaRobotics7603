@@ -5,13 +5,9 @@
 package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.apriltag.AprilTagDetection;
@@ -33,9 +29,12 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
+
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.vision.VisionThread;
@@ -49,11 +48,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ExecutorService;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -69,13 +63,14 @@ public class Robot extends TimedRobot {
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
-  VictorSPX motorL2 = new VictorSPX(7);
-  VictorSPX motorR1 = new VictorSPX(5);
-  VictorSPX motorR2 = new VictorSPX(6);
-  VictorSPX motorL1 = new VictorSPX(10);
+  CANSparkMax shooter = new CANSparkMax(3, MotorType.kBrushed);
+  VictorSPX motorL2 = new VictorSPX(1);
+  VictorSPX motorR1 = new VictorSPX(3);
+  VictorSPX motorR2 = new VictorSPX(4);
+  VictorSPX motorL1 = new VictorSPX(2);
   double offset = 0;
   double moveSpeed = 0.3;
-
+  Timer timer = new Timer();
 
   Joystick flightStick = new Joystick(0);
   Trigger aprilButton = new JoystickButton(flightStick, 0);
@@ -89,6 +84,14 @@ public class Robot extends TimedRobot {
     visionThread.start();
   }
   
+  void moveBot(double Leftspeed, double Rightspeed){
+    motorL1.set(ControlMode.PercentOutput, Leftspeed);
+    motorL2.set(ControlMode.PercentOutput, Leftspeed);
+
+    motorR1.set(ControlMode.PercentOutput, Rightspeed);
+    motorR2.set(ControlMode.PercentOutput, Rightspeed);
+  }
+
   void apriltagVisionThreadProc() {
     var detector = new AprilTagDetector();
     System.out.println("Function running");
@@ -283,40 +286,39 @@ public class Robot extends TimedRobot {
     pubTags.close();
     detector.close();
   }
+  public void shoot(){
+    
+  }
   public void followTag(){
     System.out.println("Distance from wall:" + String.valueOf(position[0]));
-    
-    if (position[2] > 0){
-      motorL1.set(ControlMode.PercentOutput, moveSpeed);
-      motorL2.set(ControlMode.PercentOutput, moveSpeed);
-  
-      motorR1.set(ControlMode.PercentOutput, moveSpeed);
-      motorR2.set(ControlMode.PercentOutput,moveSpeed);
-    } else if( position[2] < 0){
-      motorL1.set(ControlMode.PercentOutput, -moveSpeed);
-      motorL2.set(ControlMode.PercentOutput, -moveSpeed);
-  
-      motorR1.set(ControlMode.PercentOutput, -moveSpeed);
-      motorR2.set(ControlMode.PercentOutput,-moveSpeed);
+    System.out.println("This function is running");
+    if (position[2] > 0.5){
+      System.out.println("Moving X");
+      moveBot(moveSpeed, moveSpeed);
+    } else if( position[2] < -0.5){
+      moveBot(-moveSpeed, -moveSpeed);
     } else{
       if (position[0] > 1.5){
-        motorL1.set(ControlMode.PercentOutput, moveSpeed);
-        motorL2.set(ControlMode.PercentOutput, moveSpeed);
-    
-        motorR1.set(ControlMode.PercentOutput, -moveSpeed);
-        motorR2.set(ControlMode.PercentOutput,-moveSpeed);
+        System.out.println("Moving Y");
+        moveBot(moveSpeed, -moveSpeed);
+      } else if (position[0] < 0.5){
+        moveBot(-moveSpeed, moveSpeed);
       }
       else{
-        motorL1.set(ControlMode.PercentOutput, 0);
-        motorL2.set(ControlMode.PercentOutput, 0);
-  
-        motorR1.set(ControlMode.PercentOutput, 0);
-        motorR2.set(ControlMode.PercentOutput, 0);
+        System.out.println("Shooting");
+        moveBot(0, 0);
+        timer.reset();
+        timer.start();
+        if (timer.get() > 10.0){
+          this.toggle = false;
+          timer.stop();
+          shooter.set(0);
+        }
+        else{
+          shooter.set(1);;
+        }
         //run the shoot method here!
         //remeber to make the shoot method change toggle to false! Only then will this function stop running
-        //Line below is temporary
-        toggle = false;
-        
       }
     }
   }
@@ -331,6 +333,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+    followTag();
   }
 
   @Override
