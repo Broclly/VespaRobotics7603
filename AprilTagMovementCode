@@ -250,9 +250,9 @@ public class Robot extends TimedRobot {
                 new double[] {
                   robotInFieldFrame.getX(), robotInFieldFrame.getY(), robotInFieldFrame.getZ(), rot.getX(), rot.getY(), rot.getZ()
                 });
-        double x = robotInFieldFrame.getX();
-        double y = robotInFieldFrame.getY();
-        double z = robotInFieldFrame.getZ();
+        double x = robotInFieldFrame.getX() * 0.0254;
+        double y = robotInFieldFrame.getY() * 0.0254;
+        double z = robotInFieldFrame.getZ() * 0.0254;
 
         System.out.println(x);
         System.out.println(y);
@@ -265,7 +265,7 @@ public class Robot extends TimedRobot {
 
         if (aprilTagId == 1 || aprilTagId ==  2 || aprilTagId ==  3 || aprilTagId == 4) {
 
-          this.position[0] = -(this.position[0] - 15);
+          //this.position[0] = -(this.position[0] - 15);
         }
 
         // Pushes the data fetched from an AprilTag to Shuffleboard
