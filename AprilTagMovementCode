@@ -266,7 +266,7 @@ public class Robot extends TimedRobot {
 
         if (aprilTagId == 1 || aprilTagId ==  2 || aprilTagId ==  3 || aprilTagId == 4) {
 
-          //this.position[0] = -(this.position[0] - 15);
+          this.position[0] = -(this.position[0] - 15);
         }
 
         // Pushes the data fetched from an AprilTag to Shuffleboard
