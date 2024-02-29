@@ -1,0 +1,307 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
+package frc.robot;
+
+//import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+//import com.ctre.phoenix.motorcontrol.SparkMax;
+//import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+//import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+//import edu.wpi.first.cameraserver.*;
+import edu.wpi.first.wpilibj.Joystick;
+//import edu.wpi.first.cameraserver.*;
+import edu.wpi.first.wpilibj.TimedRobot;
+
+/**
+ * The VM is configured to automatically run this class, and to call the functions corresponding to
+ * each mode, as described in the TimedRobot documentation. If you change the name of this class or
+ * the package after creating this project, you must also update the build.gradle file in the
+ * project.
+ */
+public class Robot extends TimedRobot {
+    /**
+     * This function is run when the robot is first started up and should be used for any
+     * initialization code.
+    */
+    // setup for new robot
+    VictorSPX motorL1 = new VictorSPX(1);
+    VictorSPX motorL2 = new VictorSPX(2);
+    VictorSPX motorR1 = new VictorSPX(3);
+    VictorSPX motorR2 = new VictorSPX(4);
+    // shooter motors (id:1 winch, id:3 and 4 shooter, id:2 intake )
+    CANSparkMax shooterMotor1 = new CANSparkMax(4, MotorType.kBrushed);
+    CANSparkMax shooterMotor2 = new CANSparkMax(3, MotorType.kBrushed);
+    // intake motor
+    CANSparkMax intakeMotor = new CANSparkMax(2, MotorType.kBrushed);
+    // winch motor
+    CANSparkMax winchMotor = new CANSparkMax(1, MotorType.kBrushed);
+
+    // needed shooter constants
+    double angle = Math.toRadians(50);
+    double grav = 9.8;
+    double shooterD = 0; // distance forward of shooter exit relative to camera
+    double shooterH = 0; // hight of shooter exit relative to camera
+    double targetATHeight = 1; // height of target in m, ( if there are different target more logic can be added later)
+
+    double launchTestDist = 10; // get from testing, measure in meters
+    double maxVel = Math.sqrt( (grav*launchTestDist) / 2*(Math.tan(angle) + shooterH) ) / Math.cos(angle);
+    double maxRange = ( Math.tan(angle)*2* Math.pow(maxVel * Math.cos(angle) , 2) ) / 2*grav;
+    //maxRange /= 2;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+    Joystick flightStick = new Joystick(0);
+    
+    public void tank(double LMS, double RMS){
+        // change format for motor controler
+        double offset = 0.04 - (LMS/25);
+        //offset = 0;
+        //System.out.println("tanking");
+        //LMS *=LMS;
+        //RMS *= RMS;
+        
+        motorL1.set(ControlMode.PercentOutput, LMS - 0*offset);
+        motorL2.set(ControlMode.PercentOutput, LMS - 0*offset);
+
+        motorR1.set(ControlMode.PercentOutput, -RMS +0* offset);
+        motorR2.set(ControlMode.PercentOutput, -RMS + 0*offset);
+        
+    }
+    public void arcade(double Speed, double turnAng){
+        // speed - sin turn ?
+        // turn rad
+        // neg turn ang left, pos right, 0 no turn
+        /*
+        * need width of robot(dist from centre to wheels)?
+        * 
+        * inner circ/outer
+        */
+        //turnAng *= -1; // just in case
+        System.out.println(turnAng);
+        double Ls = 1;
+        double Rs = 1;
+        if (turnAng < 0){
+            //turn left
+            // left speed - sin(turn*pi/2)
+            //Ls -= Math.sin(turnAng*Math.PI/2);
+            Ls = Math.cos(turnAng*Math.PI);
+        }
+        else if(turnAng > 0){
+            // turn Right
+            // rihgt speed - sin(-turn*pi/2)
+            //Rs -= Math.sin(-turnAng*Math.PI/2);
+            Rs = Math.cos(turnAng*Math.PI);
+        }
+        else{
+            // dont turn
+        }
+        tank(Ls*Speed, Rs*Speed);
+    }
+    public void pointNShoot(double desiredAng, double currentAng, double speed){
+        // curAng - desAng?
+        arcade(speed, ( (currentAng - desiredAng) /180 ) );
+        // will this work?
+    }
+
+    public static double modulo(double mod, double of){
+        // javas mod operator "%" was being weird so I just made my correct version a function
+        mod = mod - of*Math.floor( (mod + of/2 )/of);
+        return mod;
+    }
+
+    public static double[] getPolarSqr(double xPos, double yPos){
+        /*
+            * This will convert the coords from a square radius 1, to polar coords radius 1
+            * Basicaly gives us the angle and dist from origin when given the coords from joystick (circle-ing the square)
+            */
+        // to have 0 degrees be forward x and y axis are swaped in atan 2
+        double ang = Math.atan2(xPos,yPos);
+        /*if (ang < 0 && false){
+                        ang += 2*Math.PI;
+                        // was to have vary from 0 to 2pi instead of -pi to pi, but I think - pi to pi is best
+        }*/
+        //System.out.println("angle");
+        //System.out.println(ang);
+        double hyp = Math.hypot(xPos, yPos);
+        /*
+            * to get relative radius reference expected rad for square
+            * divide circle rad by sqr rad 
+            * (I have a graph on desmos that makes regular polygons from angle, I'm using that)
+            * sqr rad = 1/ cos (mod theta + pi/side of 2pi / side ~~a.k.a (theta + pi/side )% 2pi/side~~ - pi/side) ~~side is the number of sides, 4 in this case~~
+            * circ rad = sqrt( x^2 + y^2 ) aka the hyp var
+            * circ rad/sqr rad ( since sqr rad is 1 over cos, I can just multiply by cos)
+            */
+        double side = 4;// this var will never need to change
+        double modAng = modulo(ang+Math.PI/side, 2*Math.PI/side );
+        //double modulusThing = (ang+Math.PI/side) - (2*Math.PI/side)*Math.floor( (ang+Math.PI/side) / (2*Math.PI/side) ); // mod function is x - yFloor(x/y), where x is first num and y is second ( this is the same as x mod y or x % y or mod x of y or mod(x,y) )
+        double squareRad = Math.cos( (modAng - Math.PI/side) );
+        /*
+        System.out.println("Mod?");
+        System.out.println( (ang+Math.PI/side) % (2*Math.PI/side));
+        System.out.println("This should be squre rad");
+        System.out.println(1/squareRad);
+        */
+
+        // ang is in rad, need it in deg
+        ang = Math.toDegrees(ang);
+
+        double[] polarCoords = {hyp*squareRad, ang};
+        //System.out.println(polarCoords[0]);
+        return polarCoords;
+}
+
+    public double getVel( double dist, double height){
+            /*
+                * need angle - const, distance away, height, g - const, h shooter dist, v shooter dist
+                * sqrt(-(g*d^2)/ 2*(height - tan(ang)*d))/cos(angle)
+                * angle in rad, dists in m
+                */
+            dist -= shooterD;
+            height -= shooterH;
+            // check if within half the max range
+            double vel = (Math.sqrt(-(grav*(dist*dist))/(2*(height - Math.tan(angle)*dist))))/Math.cos(angle);
+            return vel;
+    }
+
+    public void shootNote(double speed){
+        shooterMotor1.set(speed);
+        shooterMotor2.set(speed);
+    }
+    public void lowerWinch(){
+        // need to modify to actually lower winch
+        winchMotor.set(0.8);
+    }
+    public void intakeNote(){
+        intakeMotor.set(0.9);
+    }
+
+    public void autoAim(double horizontal, double distance, double vertical){
+                /*
+                 * this function gets angle to tag, if within appropriate range it moves forward or back till it can shoot
+                 * if the tag isn't found or isn't within good range it just turns
+                 */
+                // max velocity can be calced by mesuring launch dist (in m) at max vel, sqrt( (9.8*max)/2*tan(angle)) / cos(angle)
+                // range can be calced with ( tan angle * 2 * (max volcity*cos angle)^2)/ 9.8
+
+                // max vel and max range are constants, could be repalced with constant instead of math, however we would need to be very accurate
+                double APAngle = Math.atan(horizontal/distance);
+                System.out.println(APAngle);
+                
+                if (APAngle < Math.PI/12 && APAngle > -Math.PI/12){
+                        // checks if shooter is aligned (within acceptable range), should probably use angles for better accuracy
+                        double dist = Math.sqrt( distance*distance + horizontal*horizontal);
+                        System.out.println(dist);
+                        if (dist <= maxRange){
+                                // within range try shooting
+                                double neededVel = getVel(dist, targetATHeight)/maxVel;
+                                if (neededVel <= 1){
+                                        // motor can hit target
+                                        // shoot at speed of needed vel
+                                        System.out.println(neededVel);
+                                        shootNote(neededVel);
+                                }
+                                else{
+                                        // get closer? or get further away?
+                                        System.out.println("In range but can't shoot? target too high? Too close?");
+                                        arcade(-0.3, 0);
+                                }
+                        }
+                        else{
+                                // get closer
+                                arcade(0.3, 0);
+                        }
+                }
+                else{
+                        // turn ( turns at speed 0.3 - can adjust later, turn on the spot towords tag)
+                        arcade(0.3, Math.signum(APAngle));
+                }
+        }
+
+    @Override
+    public void robotInit() {}
+
+    @Override
+    public void robotPeriodic() {}
+
+    @Override
+    public void autonomousInit() {}
+
+    @Override
+    public void autonomousPeriodic() {
+        //System.out.println("IS IT WORKING!!!!");
+        double LSSpeed = 0.7;// too heavy to move at 0.2
+        //double RSSpeed = 1;
+        //tank(LSSpeed, RSSpeed);
+        //double angleOGy = modulo(gyro.getAngle(), 360);
+        //System.out.println(angleOGy);
+        //arcade(LSSpeed, RSSpeed);
+        shooterMotor1.set(LSSpeed);
+        shooterMotor2.set(LSSpeed);
+    }
+
+    @Override
+    public void teleopInit() {}
+
+    @Override
+    public void teleopPeriodic() {
+        // Point and shoot steering implementation
+        // get joystick vals
+        double joyX = flightStick.getRawAxis(0);
+        double joyY = flightStick.getRawAxis(1);
+        double gyroAngle = gyro.getAngle();
+        gyroAngle =modulo(gyroAngle, 360); // now angle will range from -180 to 180
+        double[] polarJoy = getPolarSqr(joyX, -joyY);
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //System.out.println("Gyro");
+        //System.out.println(gyroAngle);
+        System.out.println("Joystick speed");
+        System.out.println(polarJoy[0]);
+        System.out.println("Joystick angle");
+        System.out.println(polarJoy[1]);
+        System.out.println("Gyro test 3");
+        System.out.println(gyroAngle);
+        double turnAng =  (gyroAngle - polarJoy[1]) /180 ;
+        System.out.println(turnAng);
+        //arcade(polarJoy[0], turnAng );
+        pointNShoot(polarJoy[1], gyroAngle, polarJoy[0]);
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        //SmartDashboard.putNumber("Joystick Angle", polarJoy[1]);
+        //SmartDashboard.putNumber("gyro Angle", gyroAngle);
+        
+        // example auto aim implementation
+        
+        double aprilTagX = 0;
+        double aprilTagY = 0;
+        double aprilTagZ = 0;
+        boolean autoAimOn = false;
+        if (autoAimOn){
+                autoAim(aprilTagX, aprilTagZ, aprilTagY);
+        }
+        
+    }
+
+    @Override
+    public void disabledInit() {}
+
+    @Override
+    public void disabledPeriodic() {}
+
+    @Override
+    public void testInit() {}
+
+    @Override
+    public void testPeriodic() {}
+
+    @Override
+    public void simulationInit() {}
+
+    @Override
+    public void simulationPeriodic() {}
+}
