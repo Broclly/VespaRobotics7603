@@ -102,7 +102,7 @@ public class Robot extends TimedRobot {
     // Positions of AprilTags
     AprilTagFieldLayout aprilTagFieldLayout;
     try {
-        aprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
+        aprilTagFieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2024Crescendo.m_resourceFile);
     } catch (IOException e) {
       e.printStackTrace();
       aprilTagFieldLayout = null;
@@ -251,9 +251,9 @@ public class Robot extends TimedRobot {
                 new double[] {
                   robotInFieldFrame.getX(), robotInFieldFrame.getY(), robotInFieldFrame.getZ(), rot.getX(), rot.getY(), rot.getZ()
                 });
-        double x = robotInFieldFrame.getX() * 0.0254;
-        double y = robotInFieldFrame.getY() * 0.0254;
-        double z = robotInFieldFrame.getZ() * 0.0254;
+        double x = robotInFieldFrame.getX();
+        double y = robotInFieldFrame.getY();
+        double z = robotInFieldFrame.getZ();
 
         System.out.println(x);
         System.out.println(y);
