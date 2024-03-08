@@ -116,6 +116,10 @@ public class Robot extends TimedRobot {
 
     double alignToAngle = 0;
 
+    Timer autoTimer = new Timer();
+    int autoStage = 2;
+    boolean alignedRun = false;
+
 
     //driveTrain drive = new driveTrain(motorL1, motorL2, motorR1, motorR2);
 
@@ -373,17 +377,22 @@ public class Robot extends TimedRobot {
       return IsAligned;
     }
 
-    public void alignToAngleFunc(double currentAngle){
+    public boolean alignToAngleFunc(double currentAngle){
       // turn till angle in good range
       // wanted - current, gives diff and direction in sign
       double angleDiff = alignToAngle - currentAngle;
       System.out.println("Current angle: " + currentAngle);
       System.out.println("Align to angle: " + alignToAngle);
+      System.out.println("angle diff: " + angleDiff);
+
+      boolean returnMe = false;
+
       if( alignToAngle > 0 ){
         if( angleDiff <= 0 ){
           // stop moving
-          System.out.println("STOP");
+          System.out.println("STOP turning right 1");
           arcade(0, 0);
+          returnMe = true;
 
         }
         else{
@@ -394,8 +403,9 @@ public class Robot extends TimedRobot {
       else if(alignToAngle < 0){
           if( angleDiff >= 0 ){
             // stop moving
-            System.out.println("STOP");
+            System.out.println("STOP turning left -1");
             arcade(0, 0);
+            returnMe = true;
           }
           else{
             arcade(0.25, -1);
@@ -403,8 +413,23 @@ public class Robot extends TimedRobot {
       }
       else{
         // aligned stop
+        returnMe = true;
       }
+      return returnMe;
       
+    }
+    public void alignInit(double wantedAng){
+      if(alignedRun == false){
+        gyro.reset();
+        //System.out.println("Id " + neededTagsPerTeam[currentTeam][0]);
+        //double[] aprilPos = readPosDict(neededTagsPerTeam[currentTeam][0]);
+        //double angToPos = Math.atan2(aprilPos[0] , aprilPos[2]);
+        //System.out.println(angToPos);
+        //alignToAngle = angToPos - gyro.getAngle();
+        alignToAngle = wantedAng - 0;
+        //autoTimer.reset();
+        alignedRun = true;
+      }
     }
 
     public void autonomousFunction(){
@@ -536,6 +561,7 @@ public class Robot extends TimedRobot {
           // determine pose
           Transform3d pose = estimator.estimate(detection);
   
+          /*
           System.out.println("RAW DATA");
           System.out.println("x - should be left to right");
           System.out.println( pose.getX());
@@ -543,10 +569,13 @@ public class Robot extends TimedRobot {
           System.out.println( pose.getY());
           System.out.println("z - forwrds and back");
           System.out.println( pose.getZ());
+          */
+          
+          
   
-          double[] currentPos = { pose.getX(),  pose.getY(),  pose.getZ()}; // y pos seems to be relative to actual april tag height, so don't use (don't need anyway)
-          addToPosDict( detection.getId(), currentPos);
           // These transformations are required for the correct robot pose.
+          // double[] currentPos = { pose.getX(),  pose.getY(),  pose.getZ()}; // y pos seems to be relative to actual april tag height, so don't use (don't need anyway)
+          // addToPosDict( detection.getId(), currentPos);
           // They arise from the tag facing the camera thus Pi radians rotated or CCW/CW flipped from the
           // mathematically described pose from the estimator that's what our eyes see. The true rotation
           // has to be used to get the right robot pose.
@@ -567,11 +596,14 @@ public class Robot extends TimedRobot {
           System.out.println( pose.getY());
           System.out.println("z - forwrds and back");
           System.out.println( pose.getZ());
+          System.out.println("yaw angle");
+          System.out.println( pose.getRotation().getZ());
           this.position[0] = pose.getX();
           this.position[1] = pose.getY();
           this.position[2] = pose.getZ();
-          //double[] currentPos = { pose.getX(),  pose.getY(),  pose.getZ()};
-          //addToPosDict( detection.getId(), currentPos);
+
+          double[] currentPos = { pose.getX(),  pose.getY(),  pose.getZ(), pose.getRotation().getZ()};
+          addToPosDict( detection.getId(), currentPos);
 
   
           // OpenCV and WPILib estimator layout of axes is EDN and field WPILib is NWU; need x -> -y , y -> -z , z -> x and same for differential rotations
@@ -656,9 +688,12 @@ public class Robot extends TimedRobot {
       gyro.reset();
       System.out.println("Id " + neededTagsPerTeam[currentTeam][0]);
       double[] aprilPos = readPosDict(neededTagsPerTeam[currentTeam][0]);
-      double angToPos = -Math.atan2(aprilPos[2], aprilPos[0]);
+      double angToPos = Math.atan2(aprilPos[0] , aprilPos[2]);
       System.out.println(angToPos);
-      alignToAngle = angToPos - gyro.getAngle();
+      //alignToAngle = angToPos - gyro.getAngle();
+      //alignToAngle = aprilPos[3] - 0;
+      autoTimer.reset();
+      autoTimer.start();
     }
 
     @Override
@@ -681,11 +716,40 @@ public class Robot extends TimedRobot {
         //autoAim(0, 0, 0);
         //arcade(LSSpeed, 0);// trun angle in arcade dirve should vary from -1 to 1, automatically converts to angle
         //pointNShoot(90, 0, LSSpeed); // give angle in degrees (can be made for rad)
-        alignToAngleFunc(gyro.getAngle());
-        System.out.println("Id " + neededTagsPerTeam[currentTeam][0]);
+        System.out.println("timer " + autoTimer.get());
+        System.out.println("stage = " + autoStage);
+        if(autoTimer.get() <= 1.5){
+          System.out.println("MARCH FORWARDS!");
+          arcade(0.3, 0);
+        }
+        else{
+          if(autoStage == 1 && false){
+            // turn 180 or something
+            autoStage = 2;
+          }
+          else if (autoStage == 2) {
+              System.out.println("ALIGN TO TAG!!!!");
+              //alignToAngleFunc(gyro.getAngle());
+              System.out.println("Id " + neededTagsPerTeam[currentTeam][0]);
+              double[] aprilPos = readPosDict(neededTagsPerTeam[currentTeam][0]);
+              double angToPos = Math.atan2(aprilPos[0] , aprilPos[2]);
+              System.out.println("april angle " + angToPos);
+              System.out.println(" yaw " + aprilPos[3]);
+              alignInit(aprilPos[3]);
+              if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                autoStage = 3;
+              }
+          }
+          else if (autoStage == 3){
+            // shoot
+            System.out.println("SHOOT!");
+          }
 
-        
+        }
+          
     }
+
 
     @Override
     public void teleopInit() {}
