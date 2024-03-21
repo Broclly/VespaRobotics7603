@@ -1,0 +1,540 @@
+package frc.robot;
+
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.TimedRobot;
+
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+
+import java.util.ResourceBundle.Control;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
+import java.util.function.Consumer;
+
+
+/**
+ * This is a demo program showing the use of the DifferentialDrive class, specifically it contains
+ * the code necessary to operate a robot with tank drive.
+ */
+public class Robot extends TimedRobot {
+
+    VictorSPX leftMotor1 = new VictorSPX(1);
+    VictorSPX rightMotor1 = new VictorSPX(3);
+    VictorSPX leftMotor2 = new VictorSPX(2);
+    VictorSPX rightMotor2 = new VictorSPX(4);
+
+    private Joystick newJoystick = new Joystick(0);
+
+    CANSparkMax armMotor = new CANSparkMax(1, MotorType.kBrushless);
+    CANSparkMax shooterMotorBase = new CANSparkMax(2, MotorType.kBrushless);
+    CANSparkMax shooterMotor1 = new CANSparkMax(3, MotorType.kBrushless);
+    CANSparkMax shooterMotor2 = new CANSparkMax(4, MotorType.kBrushless);
+    // Add a variable to track whether the turn button was pressed in the previous iteration
+    private boolean previousButtonState = false;
+
+    Timer autoTimer = new Timer();
+    
+    // Timer to control the duration of the turn
+    private double turnStartTime = 0.0;
+    private double turnDuration = 2.0; // Adjust the duration as needed
+    private double autonomousStartTime;
+    
+    ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+    
+    boolean alignedRun = false;
+    double alignToAngle = 0;
+
+    int sideShuffleState = 0; // 0 is not shuffling, other numbers are different stages
+    Timer suffleTime = new Timer();
+    int sideShuffleStateV2 = 0;
+
+    public void tank(double LMS, double RMS){
+        // change format for motor controler
+        //double offset = 0.04 - (LMS/25);
+        //System.out.println("tanking");
+        leftMotor1.set(ControlMode.PercentOutput, LMS );
+        leftMotor2.set(ControlMode.PercentOutput, LMS );
+
+        rightMotor1.set(ControlMode.PercentOutput, -RMS);
+        rightMotor2.set(ControlMode.PercentOutput, -RMS);
+    }
+    public void arcade(double Speed, double turnAng){
+        // speed - sin turn ?
+        // turn rad
+        // neg turn ang left, pos right, 0 no turn
+        /*
+        * need width of robot(dist from centre to wheels)?
+        * 
+        * inner circ/outer
+        */
+        //turnAng *= -1; // just in case
+        System.out.println(turnAng);
+        double Ls = 1;
+        double Rs = 1;
+        if (turnAng < 0){
+            //turn left
+            // left speed - sin(turn*pi/2)
+            //Ls -= Math.sin(turnAng*Math.PI/2);
+            Ls = Math.cos(turnAng*Math.PI);
+        }
+        else if(turnAng > 0){
+            // turn Right
+            // rihgt speed - sin(-turn*pi/2)
+            //Rs -= Math.sin(-turnAng*Math.PI/2);
+            Rs = Math.cos(turnAng*Math.PI);
+        }
+        else{
+            // dont turn
+        }
+        tank(Ls*Speed, Rs*Speed);
+    }
+    public void pointNShoot(double desiredAng, double currentAng, double speed){
+        // curAng - desAng?
+        arcade(speed, ( ( (currentAng - desiredAng) /180 ) ) );
+        // will this work?
+    }
+
+    public boolean alignToAngleFunc(double currentAngle, double turnSpeed, double turnAng){
+        // turn till angle in good range
+        // wanted - current, gives diff and direction in sign
+        double angleDiff = alignToAngle - currentAngle;
+        //System.out.println("Current angle: " + currentAngle);
+        // System.out.println("Align to angle: " + alignToAngle);
+        // System.out.println("angle diff: " + angleDiff);
+
+        /* 
+         * I can use the formula ( s / (-x-s-z) ) + 1 where s and z can be any positive num, to make the bot slow down as it gets closer to the wanted angle
+         * s modifies the rate at which the speed drops ( good value for s is 36)
+         * z is where the zero will be, which will push the y-intercept up because we don't want the robot to be unable to turn before it reaches the angle ( good value is 5)
+         */
+        /* 
+        double speedMod = 36;
+        double zeroSpeedMod = 5;
+
+        turnAng = speedMod/(-angleDiff-speedMod-zeroSpeedMod) ) ;
+        */
+
+        //double turnSpeed = 0.25;
+        boolean returnMe = false;
+
+        if( alignToAngle > 0 ){
+            if( angleDiff <= 0 ){
+                // stop moving
+                //System.out.println("STOP turning right 1");
+                arcade(0, 0);
+                returnMe = true;
+
+            }
+            else{
+                arcade(turnSpeed,turnAng);
+
+            }
+
+        }
+        else if(alignToAngle < 0){
+                if( angleDiff >= 0 ){
+                    // stop moving
+                    //System.out.println("STOP turning left -1");
+                    arcade(0, 0);
+                    returnMe = true;
+                }
+                else{
+                    arcade(turnSpeed, -turnAng);
+                }
+        }
+        else{
+            // aligned stop
+            returnMe = true;
+        }
+        return returnMe;
+        
+    }
+    public void alignInit(double wantedAng){
+        if(alignedRun == false){
+            //gyro.reset();
+            //System.out.println("Id " + neededTagsPerTeam[currentTeam][0]);
+            //double[] aprilPos = readPosDict(neededTagsPerTeam[currentTeam][0]);
+            //double angToPos = Math.atan2(aprilPos[0] , aprilPos[2]);
+            //System.out.println(angToPos);
+            //alignToAngle = angToPos - gyro.getAngle();
+            alignToAngle = wantedAng - gyro.getAngle();
+            //autoTimer.reset();
+            alignedRun = true;
+        }
+    }
+    public boolean alignToAngleFunc(double currentAngle){
+        
+        boolean returnMe = alignToAngleFunc(currentAngle, 0.25, 1);
+        return returnMe;
+        
+    }
+    
+    public void sideShuffle(boolean continueShuffle, double shiftAng, double moveSpeed, double moveTime ) {
+        // turn approx. 10°, move back for 1 second, turn 20°, move forwrd for 1 second
+        // on stop, realign
+        // positive angles will shift it left, negative right
+        // will move in a "W" or "V" pattern
+        /* 
+         * 1. let robot align
+         * 2. move back for second
+         * 3. let robot align double angle
+         * 4. move forward for second
+         * 5. let robot align doubl angle
+         * 6. repeat 2-5
+         * 7. align back to original 
+        */
+        /* 
+         * use sideSuffleState to store which step is currently running
+         * 
+         */
+        // double shiftAng = 10;
+        // double moveSpeed = 0.5;
+        // double moveTime = 1;
+
+        
+        if(sideShuffleState == 0 && continueShuffle == true){
+            // start process
+            gyro.reset();
+            sideShuffleState = 1;
+        }
+        else if(sideShuffleState == 0){
+            // don't do anything
+        }
+        else if(continueShuffle == false){
+            // stop shuffling, go back to orignal angle
+            alignInit(0);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleState = 0;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+
+        }
+        else if(sideShuffleState == 1){
+            // align to angle
+            alignInit(shiftAng);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleState = 2;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+        else if(sideShuffleState == 2){
+            // move back for a second
+            if( suffleTime.get() >= moveTime){
+                // a second has passed, move to next stage
+                tank(0,0);
+                sideShuffleState = 3;
+
+            }
+            else{
+                arcade(-moveSpeed, 0);
+            }
+
+        }
+        else if(sideShuffleState == 3){
+            // align to double angle
+            alignInit(-1*shiftAng);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleState = 4;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+        else if(sideShuffleState == 4){
+            // move forward for a second
+            if( suffleTime.get() >= moveTime){
+                // a second has passed, move to next stage
+                tank(0,0);
+                sideShuffleState = 5;
+
+            }
+            else{
+                arcade(moveSpeed, 0);
+            }
+
+        }
+        else if(sideShuffleState == 5){
+            // align to double angle
+            alignInit(1*shiftAng);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleState = 2;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+    }
+    public void sideshufflev2(boolean continueShuffle, double shiftAng){
+        // side suffle in more of a "U" pattern
+        // 
+
+        /* 
+         * 1. move back while aligning ( will move half the U shape or like a J)
+         * 2. turn to face the other direction
+         * 3. align to 0 while moving forwrds (other half of U, or like a curved L)
+         * 4. repeat 1-3
+         */
+
+        double turnSpeed = 0.4;
+        double turnAng = 0.25;
+
+        if(sideShuffleStateV2 == 0 && continueShuffle == true){
+            // start process
+            gyro.reset();
+            sideShuffleStateV2 = 1;
+        }
+        else if(sideShuffleStateV2 == 0){
+            // don't do anything
+        }
+        else if(continueShuffle == false){
+            // stop shuffling, go back to orignal angle
+            alignInit(0);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleStateV2 = 0;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+
+        }
+        else if(sideShuffleState == 1){
+            // align to angle
+            alignInit(shiftAng);
+            if ( alignToAngleFunc(gyro.getAngle(), -turnSpeed, turnAng) == true ){
+                // change mode or something
+                sideShuffleStateV2 = 2;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+        else if(sideShuffleState == 2){
+            // align to double angle
+            alignInit(-1*shiftAng);
+            if ( alignToAngleFunc(gyro.getAngle()) == true ){
+                // change mode or something
+                sideShuffleState = 3;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+        else if(sideShuffleState == 3){
+            // align to double angle
+            alignInit(0);
+            if ( alignToAngleFunc(gyro.getAngle(), turnSpeed, turnAng) == true ){
+                // change mode or something
+                sideShuffleState = 1;
+                alignedRun = false;
+
+                suffleTime.reset();
+                suffleTime.start();
+            }
+        }
+    
+
+    }
+
+    @Override
+    public void robotInit() {
+        CameraServer.startAutomaticCapture();
+
+        System.out.println();
+    
+        // We need to invert one side of the drivetrain so that positive voltages
+        // result in both sides moving forward. Depending on how your robot's
+        // gearbox is constructed, you might have to invert the left side instead.
+    }
+
+    @Override
+    public void teleopPeriodic() {
+        double x_ampl = newJoystick.getRawAxis(1);
+        double y_ampl = newJoystick.getRawAxis(0);
+        double leftSpeed = (-x_ampl + y_ampl);
+        double rightSpeed = (y_ampl + x_ampl);
+        
+        if (newJoystick.getRawButton(12)){
+            armMotor.set(1);
+        }else if(newJoystick.getRawButton(11)){
+            armMotor.set(-1);
+        }else{
+            armMotor.set(0);
+        }
+
+        if (newJoystick.getRawButton(1)){
+            shooterMotor1.set(-5);
+            shooterMotor2.set(-5);
+        }
+        else if (newJoystick.getRawButton(2)){
+            shooterMotor1.set(5);
+            shooterMotor2.set(5);
+        }  
+        else if(newJoystick.getRawButton(6)){
+            shooterMotor2.set(-5);
+        }
+        else{
+            shooterMotor1.set(0);
+            shooterMotor2.set(0);
+        }
+
+
+        if (newJoystick.getRawButton(5)){
+            shooterMotorBase.set(1);
+        }
+        else if(newJoystick.getRawButton(3)){
+            shooterMotorBase.set(-1);
+        }
+        else{
+            shooterMotorBase.set(0);
+        }
+
+        if (leftSpeed > 1) {
+            leftSpeed = leftSpeed / 3;
+        }
+
+        if (rightSpeed > 1) {
+            rightSpeed = rightSpeed / 3;
+        }
+
+        //System.out.println("Left Speed: " + leftSpeed);
+        //System.out.println("Right Speed: " + rightSpeed);
+
+        // Update the previous button state for the next iteration
+
+        double suffleAngle = 10;// positive angles suffle to the left
+        boolean continueShuffle = false;
+
+
+        if( newJoystick.getRawButton(9) ){
+            // cancel suffle
+            sideShuffleState = 0;
+        }
+        else if(newJoystick.getRawButton(7)){
+            continueShuffle = true;
+            suffleAngle = 10; // moves left
+        }
+        else if(newJoystick.getRawButton(8)){
+            continueShuffle = true;
+            suffleAngle = -10; // moves right
+        }
+
+        sideShuffle(continueShuffle, suffleAngle, 0.5, 0.5);
+        // calling the function here is fine because I need it to continue to call the function so it can realign after shuffling, 
+        // after that it won't do anything ( it can also be cancelled mid realignment if needed with button 9)
+
+        if(sideShuffleState == 0){
+            // not trying to shuffle so use orginal
+            leftMotor1.set(ControlMode.PercentOutput, leftSpeed);
+            leftMotor2.set(ControlMode.PercentOutput, leftSpeed);
+            rightMotor2.set(ControlMode.PercentOutput, rightSpeed);
+            rightMotor1.set(ControlMode.PercentOutput, rightSpeed);
+        }
+
+    }
+
+    @Override
+    public void autonomousInit() {
+        // Add any initialization code for autonomous mode here.
+        autonomousStartTime = Timer.getFPGATimestamp();
+        autoTimer.reset();
+        autoTimer.start();
+
+    }
+
+    @Override
+    public void autonomousPeriodic() {
+        double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+        timeElapsed = autoTimer.get();
+        double jerk1 = 0.2;
+        double jerk2 = jerk1 + 0.2;
+        double p1Time = jerk2 + 4;// rev top motor
+        double p2Time = p1Time + 1; // shoot note
+        double p3Time = p2Time + 3;// backup
+        double jerkSpeed = 0.8;
+        //double p4Time = 3;// backup?
+        /*
+        if (timeElapsed < jerk1 ){
+
+            //driveLeftSpark.set(ControlMode.PercentOutput, -jerkSpeed);
+            //driveLeftVictor.set(ControlMode.PercentOutput, -jerkSpeed);
+            //driveRightVictor.set(ControlMode.PercentOutput, jerkSpeed);
+            //driveRightSpark.set(ControlMode.PercentOutput, jerkSpeed);
+    
+        }
+        else if(timeElapsed <jerk2){
+            //driveLeftSpark.set(ControlMode.PercentOutput, jerkSpeed);
+            //driveLeftVictor.set(ControlMode.PercentOutput, jerkSpeed);
+            //driveRightVictor.set(ControlMode.PercentOutput, -jerkSpeed);
+            //driveRightSpark.set(ControlMode.PercentOutput, -jerkSpeed);
+        }
+        else if (timeElapsed < p1Time ){
+            //shooterMotor2.set(-5);
+            //driveLeftSpark.set(ControlMode.PercentOutput, 0);
+            //driveLeftVictor.set(ControlMode.PercentOutput, 0);
+            //driveRightVictor.set(ControlMode.PercentOutput, 0);
+            //driveRightSpark.set(ControlMode.PercentOutput, 0);
+
+        } 
+        else if(timeElapsed < p2Time){
+        //shooterMotor1.set(-5);
+        //shooterMotor2.set(-5);
+        }
+        */
+
+        if(timeElapsed < 5){   
+        leftMotor1.set(ControlMode.PercentOutput, -0.5);
+        leftMotor2.set(ControlMode.PercentOutput, -0.5);
+        rightMotor2.set(ControlMode.PercentOutput, 0.6);
+        rightMotor1.set(ControlMode.PercentOutput, 0.6);
+        } 
+        else{
+        leftMotor1.set(ControlMode.PercentOutput, 0);
+        leftMotor2.set(ControlMode.PercentOutput, 0);
+        rightMotor2.set(ControlMode.PercentOutput, 0);
+        rightMotor1.set(ControlMode.PercentOutput, 0);
+        shooterMotor1.set(0);
+        shooterMotor2.set(0);
+        }
+    }
+
+    @Override
+    public void disabledInit() {}
+
+    @Override
+    public void disabledPeriodic() {}
+
+    @Override
+    public void testInit() {}
+
+    @Override
+    public void testPeriodic() {}
+
+    @Override
+    public void simulationInit() {}
+
+    @Override
+    public void simulationPeriodic() {}
+    }
