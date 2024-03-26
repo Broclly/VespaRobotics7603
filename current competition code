@@ -24,10 +24,10 @@ public class Robot extends TimedRobot
 
 	public void driveRobot(double leftspeed, double rightspeed)
 	{
-		if (leftspeed > 1) leftspeed = 1;
-		if (rightspeed > 1) rightspeed = 1;
-		if (leftspeed < -1) leftspeed = -1;
-		if (rightspeed < -1) rightspeed = -1;
+		if (leftspeed > 1 || leftspeed < -1) 
+			leftspeed = Math.signum(leftspeed);
+		if (rightspeed > 1 || rightspeed < -1) 
+			rightspeed = Math.signum(rightspeed);
 
 		driveLeft1.set(ControlMode.PercentOutput, leftspeed);
 		driveLeft2.set(ControlMode.PercentOutput, leftspeed);
