@@ -202,6 +202,7 @@ public class Robot extends TimedRobot
 		double jerkspeed = 0.5;
 		double normalspeed = 0.25;
 		int mode = 0;
+		int stage = 0;
 		int i;
 
 		enableshooter *= -1;
@@ -209,12 +210,12 @@ public class Robot extends TimedRobot
 		for (i = 0; i < timeincrements.length; i++) {
 			accumulator += timeincrements[i];
 			if (accumulator > timeelapsed) {
-				mode = i;
+				stage = i;
 				break;
 			}
 		}
 
-		switch (mode) {
+		switch (stage) {
 		case 0:
 			driveRobot(-jerkspeed, jerkspeed);
 			shooterMotor2.set(enableshooter);
@@ -224,6 +225,7 @@ public class Robot extends TimedRobot
 			break;
 		case 2:
 			driveRobot(0, 0);
+			break;
 		case 3:
 			shooterMotor1.set(enableshooter);
 			shooterMotor2.set(enableshooter);
