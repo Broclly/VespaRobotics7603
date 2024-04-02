@@ -10,10 +10,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.photonvision.*;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 // motors
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+
+import java.util.List;
 
 
 
@@ -98,8 +101,16 @@ public class Robot extends TimedRobot {
     //System.out.println(camera.getLatestResult());
     PhotonPipelineResult x = camera.getLatestResult();
     PhotonPipelineResult all = camera.getLatestResult();
-    List<> foundTags = all.getTargets();
-    // double range = PhotonUtils.calculateDistanceToTargetMeters(Units.inchesToMeters(26.5), Units.inchesToMeters(20), Units.degreesToRadians(0),Units.degreesToRadians(x.getBestTarget().getPitch()));
+    List<PhotonTrackedTarget> foundTags = null;
+    double range = Double.NEGATIVE_INFINITY;
+    
+    if(x.hasTargets()){
+        foundTags = all.getTargets();
+        range = PhotonUtils.calculateDistanceToTargetMeters(Units.inchesToMeters(26.5), Units.inchesToMeters(20), Units.degreesToRadians(0),Units.degreesToRadians(x.getBestTarget().getPitch()));
+    
+    }
+    System.out.println(x);
+    System.out.println(range);
     // SmartDashboard.putNumber("x Val", range);
     // double distance = x.getBestTarget().getBestCameraToTarget().getX();
     // double turnedAngle = x.getBestTarget().getBestCameraToTarget().getRotation().getZ();
@@ -108,6 +119,7 @@ public class Robot extends TimedRobot {
     // System.out.println(turnedAngle);
 
     // /* ﻿﻿ The startCompetition() method (or methods called by it) should have handled the exception above. ﻿﻿  */
+    // /* This PhotonPipelineResult object has no targets associated with it! Please check hasTargets() before calling this method. For more information, please review the PhotonLib documentation at https://docs.photonvision.org */
 
     // System.out.println("found tags " + foundTags );
 
